@@ -122,12 +122,14 @@ variable "postgres_database" {
 variable "postgres_password" {
   description = "Password of the user who will access the database. If no value is provided, a random value will be generated"
   type = string
+  sensitive   = true
   default = ""
 }
 
 variable "ca" {
   description = "The ca that will sign the db's certificate. Should have the following keys: key, key_algorithm, certificate"
   type = any
+  sensitive   = true
 }
 
 variable "domains" {
