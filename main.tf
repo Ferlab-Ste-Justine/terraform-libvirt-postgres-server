@@ -45,6 +45,7 @@ data "template_cloudinit_config" "user_data" {
         tls_key = tls_private_key.key.private_key_pem
         tls_certificate = "${tls_locally_signed_cert.certificate.cert_pem}\n${var.ca.certificate}"
         postgres_image = var.postgres_image
+        chrony = var.chrony
       }
     )
   }
