@@ -61,6 +61,11 @@ This module takes the following variables as input:
 - **ca**: Certificate authority that will be used to sign the server's certificate. It is expected to contain the following keys: key, key_algorithm, certificate
 - **key_length**: The key length of the certificate's private key in bits. Defaults to 4096
 - **domains**: Domains that will be included in the server's certificate
+- **chrony**: Optional chrony configuration for when you need a more fine-grained ntp setup on your vm. It is an object with the following fields:
+  - **enabled**: If set the false (the default), chrony will not be installed and the vm ntp settings will be left to default.
+  - **servers**: List of ntp servers to sync from with each entry containing two properties, **url** and **options** (see: https://chrony.tuxfamily.org/doc/4.2/chrony.conf.html#server)
+  - **pools**: A list of ntp server pools to sync from with each entry containing two properties, **url** and **options** (see: https://chrony.tuxfamily.org/doc/4.2/chrony.conf.html#pool)
+  - **makestep**: An object containing remedial instructions if the clock of the vm is significantly out of sync at startup. It is an object containing two properties, **threshold** and **limit** (see: https://chrony.tuxfamily.org/doc/4.2/chrony.conf.html#makestep)
 
 ## Output
 
