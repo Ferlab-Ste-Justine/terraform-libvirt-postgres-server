@@ -20,52 +20,31 @@ variable "volume_id" {
   type        = string
 }
 
-variable "network_id" {
-  description = "Id of the libvirt network to connect the vm to if you plan on connecting the vm to a libvirt network"
-  type        = string
-  default     = ""
+variable "libvirt_network" {
+  description = "Parameters of the libvirt network connection if a libvirt network is used. Has the following parameters: network_id, ip, mac"
+  type = object({
+      network_id = string
+      ip = string
+      mac = string
+  })
+  default = {
+      network_id = ""
+      ip = ""
+      mac = ""
+  }
 }
 
-variable "macvtap_interface" {
-  description = "Interface that you plan to connect your vm to via a lower macvtap interface. Note that either this or network_id should be set, but not both."
-  type        = string
-  default     = ""
-}
-
-variable "macvtap_vm_interface_name_match" {
-  description = "Expected pattern of the network interface name in the vm."
-  type        = string
-  //https://github.com/systemd/systemd/blob/main/src/udev/udev-builtin-net_id.c#L932
-  default     = "en*"
-}
-
-variable "macvtap_subnet_prefix_length" {
-  description = "Length of the subnet prefix (ie, the yy in xxx.xxx.xxx.xxx/yy). Used for macvtap only."
-  type        = string
-  default     = ""
-}
-
-variable "macvtap_gateway_ip" {
-  description = "Ip of the physical network's gateway. Used for macvtap only."
-  type        = string
-  default     = ""
-}
-
-variable "macvtap_dns_servers" {
-  description = "Ip of dns servers to setup on the vm, useful mostly during the initial cloud-init bootstraping to resolve domain of installables. Used for macvtap only."
-  type        = list(string)
-  default     = []
-}
-
-variable "ip" {
-  description = "Ip address of the vm"
-  type        = string
-}
-
-variable "mac" {
-  description = "Mac address of the vm"
-  type        = string
-  default     = ""
+variable "macvtap_interfaces" {
+  description = "List of macvtap interfaces. Mutually exclusive with the libvirt_network Field. Each entry has the following keys: interface, prefix_length, ip, mac, gateway and dns_servers"
+  type        = list(object({
+    interface = string
+    prefix_length = string
+    ip = string
+    mac = string
+    gateway = string
+    dns_servers = list(string)
+  }))
+  default = []
 }
 
 variable "cloud_init_volume_pool" {
@@ -97,70 +76,6 @@ variable "ssh_admin_public_key" {
   type        = string
 }
 
-
-variable "postgres_image" {
-  description = "Name of the docker image that will be used to provision postgres"
-  type = string
-}
-
-variable "postgres_params" {
-  description = "Extra parameters to pass to the postgres binary"
-  type = string
-  default = ""
-}
-
-variable "postgres_user" {
-  description = "User that will access the database"
-  type = string
-}
-
-variable "postgres_database" {
-  description = "Name of the database that will be generated"
-  type = string
-}
-
-variable "postgres_password" {
-  description = "Password of the user who will access the database. If no value is provided, a random value will be generated"
-  type = string
-  sensitive   = true
-  default = ""
-}
-
-variable "ca" {
-  description = "The ca that will sign the db's certificate. Should have the following keys: key, key_algorithm, certificate"
-  type = any
-  sensitive   = true
-}
-
-variable "domains" {
-  description = "Domains of the database, which will be used for the certificate"
-  type = list(string)
-}
-
-variable "organization" {
-  description = "The organization of the postgres certificate"
-  type = string
-  default = "Ferlab"
-}
-
-variable "certificate_validity_period" {
-  description = "The postgres' certificate's validity period in hours"
-  type = number
-  default = 100*365*24
-}
-
-variable "certificate_early_renewal_period" {
-  description = "The postgres' certificate's early renewal period in hours"
-  type = number
-  default = 365*24
-}
-
-variable "key_length" {
-  description = "The key length of the certificate's private key"
-  type = number
-  default = 4096
-}
-
 variable "chrony" {
   description = "Chrony configuration for ntp. If enabled, chrony is installed and configured, else the default image ntp settings are kept"
   type        = object({
@@ -190,4 +105,88 @@ variable "chrony" {
       limit = 0
     }
   }
+}
+
+variable "fluentd" {
+  description = "Fluentd configurations"
+  sensitive   = true
+  type = object({
+    enabled = bool,
+    patroni_tag = string,
+    postgres_tag = string,
+    node_exporter_tag = string,
+    forward = object({
+      domain = string,
+      port = number,
+      hostname = string,
+      shared_key = string,
+      ca_cert = string,
+    }),
+  })
+  default = {
+    enabled = false
+    patroni_tag = ""
+    postgres_tag = ""
+    node_exporter_tag = ""
+    forward = {
+      domain = ""
+      port = 0
+      hostname = ""
+      shared_key = ""
+      ca_cert = ""
+    }
+  }
+}
+
+variable "postgres" {
+  description = "Postgres configurations"
+  sensitive   = true
+  type = object({
+    params = list(object({
+      key = string,
+      value = string,
+    })),
+    replicator_password = string,
+    superuser_password = string,
+    ca = object({
+      key = string,
+      key_algorithm = string, 
+      certificate = string,
+    }),
+    certificate = object({
+      domains = list(string),
+      organization = string,
+      validity_period = number,
+      early_renewal_period = number,
+      key_length = number,
+    }),
+  })
+}
+
+variable "etcd" {
+  description = "Etcd configurations"
+  sensitive   = true
+  type = object({
+      hosts = list(string),
+      ca_cert = string,
+      client_cert = string,
+      client_key = string,
+  })
+}
+
+variable "patroni" {
+  description = "Patroni configurations"
+  sensitive   = true
+  type = object({
+    scope = string,
+    namespace = string,
+    name = string,
+    ttl = number,
+    loop_wait = number,
+    retry_timeout = number,
+    master_start_timeout = number,
+    master_stop_timeout = number,
+    watchdog_safety_margin = number,
+    synchronous_node_count = number,
+  })
 }
