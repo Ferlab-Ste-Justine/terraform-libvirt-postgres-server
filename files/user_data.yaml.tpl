@@ -156,9 +156,9 @@ packages:
   - lsb-release
   - wget
   - gnupg-agent
+  - build-essential
 %{ if fluentd.enabled ~}
   - ruby-full
-  - build-essential
 %{ endif ~}
 %{ if chrony.enabled ~}
   - chrony
