@@ -141,12 +141,15 @@ write_files:
       Description="Postgres Patroni"
       Wants=network-online.target
       After=network-online.target
+      StartLimitIntervalSec=0
 
       [Service]
       User=postgres
       Group=postgres
       Type=simple
-      ExecStart=patroni.py /opt/patroni.yml
+      Restart=always
+      RestartSec=1
+      ExecStart=patroni /opt/patroni.yml
 
       [Install]
       WantedBy=multi-user.target
@@ -156,9 +159,10 @@ packages:
   - lsb-release
   - wget
   - gnupg-agent
-  - build-essential
+  - libpq-dev
 %{ if fluentd.enabled ~}
   - ruby-full
+  - build-essential
 %{ endif ~}
 %{ if chrony.enabled ~}
   - chrony
@@ -193,6 +197,8 @@ runcmd:
   - wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
   - apt-get update
   - apt-get install -y postgresql-14 postgresql-contrib-14
+  - systemctl stop postgresql
+  - systemctl disable postgresql
   - mkdir -p /var/lib/postgresql/14/data
   - chmod 0700 /var/lib/postgresql/14/data
   - chown postgres:postgres /var/lib/postgresql/14/data
