@@ -34,43 +34,43 @@ write_files:
 %{ endif ~}
   #Postgres certs
   - path: /opt/postgres/pg.key
-    owner: postgres:postgres
+    owner: root:root
     permissions: "0400"
     content: |
       ${indent(6, tls_pg_key)}
   - path: /opt/postgres/pg.pem
-    owner: postgres:postgres
+    owner: root:root
     permissions: "0400"
     content: |
       ${indent(6, tls_pg_cert)}
   - path: /opt/postgres/patroni_client.key
-    owner: postgres:postgres
+    owner: root:root
     permissions: "0400"
     content: |
       ${indent(6, tls_patroni_client_key)}
   - path: /opt/postgres/patroni_client.pem
-    owner: postgres:postgres
+    owner: root:root
     permissions: "0400"
     content: |
       ${indent(6, tls_patroni_client_cert)}
   - path: /opt/postgres/pg_ca.pem
-    owner: postgres:postgres
+    owner: root:root
     permissions: "0400"
     content: |
       ${indent(6, tls_pg_ca_cert)}
   #Etcd certs
   - path: /opt/etcd/client.key
-    owner: postgres:postgres
+    owner: root:root
     permissions: "0400"
     content: |
       ${indent(6, tls_etcd_client_key)}
   - path: /opt/etcd/client.pem
-    owner: postgres:postgres
+    owner: root:root
     permissions: "0400"
     content: |
       ${indent(6, tls_etcd_client_cert)}
   - path: /opt/etcd/ca.pem
-    owner: postgres:postgres
+    owner: root:root
     permissions: "0400"
     content: |
       ${indent(6, tls_etcd_ca_cert)}
@@ -203,8 +203,10 @@ runcmd:
   - chown postgres:postgres /opt/patroni.yml
   - mkdir -p /opt/patroni
   - chown postgres:postgres /opt/patroni
-  - pip install --upgrade pip
-  - pip install psycopg2>=2.5.4
-  - pip install patroni[etcd3]
+  - chown -R postgres:postgres /opt/postgres
+  - chown -R postgres:postgres /opt/etcd
+  - pip3 install --upgrade pip
+  - pip3 install psycopg2>=2.5.4
+  - pip3 install patroni[etcd3]
   - systemctl enable patroni.service
   - systemctl start patroni.service
