@@ -70,8 +70,6 @@ data "template_cloudinit_config" "user_data" {
         tls_pg_ca_cert = var.postgres.ca.certificate
         tls_patroni_client_key = tls_private_key.patroni_client_key.private_key_pem
         tls_patroni_client_cert = tls_locally_signed_cert.patroni_client_certificate.cert_pem
-        tls_etcd_client_key = var.etcd.client_key
-        tls_etcd_client_cert = var.etcd.client_cert
         tls_etcd_ca_cert = var.etcd.ca_cert
       }
     )

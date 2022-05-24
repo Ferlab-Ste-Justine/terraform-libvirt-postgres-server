@@ -59,16 +59,6 @@ write_files:
     content: |
       ${indent(6, tls_pg_ca_cert)}
   #Etcd certs
-  - path: /opt/etcd/client.key
-    owner: root:root
-    permissions: "0400"
-    content: |
-      ${indent(6, tls_etcd_client_key)}
-  - path: /opt/etcd/client.pem
-    owner: root:root
-    permissions: "0400"
-    content: |
-      ${indent(6, tls_etcd_client_cert)}
   - path: /opt/etcd/ca.pem
     owner: root:root
     permissions: "0400"

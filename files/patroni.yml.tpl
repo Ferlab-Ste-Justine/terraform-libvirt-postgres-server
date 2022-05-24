@@ -19,8 +19,8 @@ ctl:
 etcd3:
   protocol: https
   cacert: /opt/etcd/ca.pem
-  cert: /opt/etcd/client.pem
-  key: /opt/etcd/client.key
+  username: ${etcd.username}
+  password: ${etcd.password}
   hosts:
 %{ for etcd_host in etcd.hosts ~}
     - ${etcd_host}

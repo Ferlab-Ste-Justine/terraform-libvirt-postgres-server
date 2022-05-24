@@ -169,8 +169,8 @@ variable "etcd" {
   type = object({
       hosts = list(string),
       ca_cert = string,
-      client_cert = string,
-      client_key = string,
+      username = string,
+      password = string,
   })
 }
 
