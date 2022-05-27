@@ -3,8 +3,8 @@ namespace: ${patroni.namespace}
 name: ${patroni.name}
 
 restapi:
-  listen: 0.0.0.0:443
-  connect_address: 0.0.0.0:443
+  listen: 0.0.0.0:4443
+  connect_address: 0.0.0.0:4443
   certfile: /opt/postgres/pg.pem
   keyfile: /opt/postgres/pg.key
   cafile: /opt/postgres/pg_ca.pem
@@ -57,8 +57,8 @@ bootstrap:
     - hostssl all all 0.0.0.0/0 scram-sha-256
 
 postgresql:
-  listen: 0.0.0.1:5432
-  connect_address: 0.0.0.1:5432
+  listen: 0.0.0.0:5432
+  connect_address: 0.0.0.0:5432
   data_dir: /var/lib/postgresql/14/data
   bin_dir: /usr/lib/postgresql/14/bin
   pgpass: /opt/patroni/.pgpass
