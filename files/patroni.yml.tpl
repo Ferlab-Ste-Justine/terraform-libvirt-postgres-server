@@ -4,7 +4,7 @@ name: ${patroni.name}
 
 restapi:
   listen: 0.0.0.0:4443
-  connect_address: 0.0.0.0:4443
+  connect_address: ${advertised_ip}:4443
   certfile: /opt/postgres/pg.pem
   keyfile: /opt/postgres/pg.key
   cafile: /opt/postgres/pg_ca.pem
@@ -58,7 +58,7 @@ bootstrap:
 
 postgresql:
   listen: 0.0.0.0:5432
-  connect_address: 0.0.0.0:5432
+  connect_address: ${advertised_ip}:5432
   data_dir: /var/lib/postgresql/14/data
   bin_dir: /usr/lib/postgresql/14/bin
   pgpass: /opt/patroni/.pgpass
@@ -66,10 +66,13 @@ postgresql:
     replication:
       username: replicator
       password: ${postgres.replicator_password}
+      sslmode: verify-full
+      sslrootcert: /opt/postgres/pg_ca.pem
     superuser:
       username: postgres
       password: ${postgres.superuser_password}
-
+      sslmode: verify-full
+      sslrootcert: /opt/postgres/pg_ca.pem
 watchdog:
   mode: required
   device: /dev/watchdog

@@ -45,6 +45,7 @@ locals {
       patroni = var.patroni
       postgres = var.postgres
       etcd = var.etcd
+      advertised_ip = local.ips.0
     }
   )
 }

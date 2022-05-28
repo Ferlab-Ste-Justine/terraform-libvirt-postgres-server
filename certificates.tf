@@ -11,8 +11,8 @@ resource "tls_cert_request" "pg_request" {
     organization = var.postgres.certificate.organization
   }
 
-  dns_names = var.postgres.certificate.domains
-  ip_addresses = local.ips
+  dns_names = distinct(concat(var.postgres.certificate.domains, ["localhost"]))
+  ip_addresses = distinct(concat(local.ips, ["127.0.0.1"]))
 }
 
 resource "tls_locally_signed_cert" "pg_certificate" {
