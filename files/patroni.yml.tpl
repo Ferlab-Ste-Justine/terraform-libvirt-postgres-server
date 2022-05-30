@@ -53,15 +53,15 @@ bootstrap:
     - data-checksums
     - locale: C
 
-  pg_hba:
-    - hostssl all all 0.0.0.0/0 scram-sha-256
-
 postgresql:
   listen: 0.0.0.0:5432
   connect_address: ${advertised_ip}:5432
   data_dir: /var/lib/postgresql/14/data
   bin_dir: /usr/lib/postgresql/14/bin
   pgpass: /opt/patroni/.pgpass
+  pg_hba:
+    - hostssl all all 0.0.0.0/0 scram-sha-256
+    - hostssl replication replicator 0.0.0.0/0 scram-sha-256
   authentication:
     replication:
       username: replicator
@@ -73,6 +73,7 @@ postgresql:
       password: ${postgres.superuser_password}
       sslmode: verify-full
       sslrootcert: /opt/postgres/pg_ca.pem
+
 watchdog:
   mode: required
   device: /dev/watchdog
