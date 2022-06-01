@@ -155,6 +155,7 @@ variable "postgres" {
     }),
     certificate = object({
       domains = list(string),
+      extra_ips = list(string),
       organization = string,
       validity_period = number,
       early_renewal_period = number,
