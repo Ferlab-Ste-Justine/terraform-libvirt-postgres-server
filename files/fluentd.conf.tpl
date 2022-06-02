@@ -52,5 +52,5 @@
     shared_key ${fluentd.forward.shared_key}
   </security>
 
-  ${indent(6, fluentd_buffer_conf)}
+  ${indent(2, fluentd_buffer_conf)}
 </match>
