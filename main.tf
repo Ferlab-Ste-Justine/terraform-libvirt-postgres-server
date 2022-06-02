@@ -24,19 +24,11 @@ locals {
   ] : [
     for macvtap_interface in var.macvtap_interfaces: macvtap_interface.ip
   ]
-  /*patroni = defaults(var.patroni, {
-    ttl = 60
-    loop_wait = 5
-    retry_timeout = 10
-    master_start_timeout = 300
-    master_stop_timeout = 300
-    watchdog_safety_margin = -1
-    synchronous_node_count = 1
-  })*/
   fluentd_conf = templatefile(
     "${path.module}/files/fluentd.conf.tpl", 
     {
       fluentd = var.fluentd
+      fluentd_buffer_conf = var.fluentd.buffer.customized ? var.fluentd.buffer.custom_value : file("${path.module}/files/fluentd.conf")
     }
   )
   patroni_conf = templatefile(

@@ -113,7 +113,6 @@ variable "fluentd" {
   type = object({
     enabled = bool,
     patroni_tag = string,
-    postgres_tag = string,
     node_exporter_tag = string,
     forward = object({
       domain = string,
@@ -122,11 +121,14 @@ variable "fluentd" {
       shared_key = string,
       ca_cert = string,
     }),
+    buffer = object({
+      customized = bool,
+      custom_value = string,
+    })
   })
   default = {
     enabled = false
     patroni_tag = ""
-    postgres_tag = ""
     node_exporter_tag = ""
     forward = {
       domain = ""
@@ -134,6 +136,10 @@ variable "fluentd" {
       hostname = ""
       shared_key = ""
       ca_cert = ""
+    }
+    buffer = {
+      customized = false
+      custom_value = ""
     }
   }
 }
