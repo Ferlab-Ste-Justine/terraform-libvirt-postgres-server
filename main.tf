@@ -28,7 +28,7 @@ locals {
     "${path.module}/files/fluentd.conf.tpl", 
     {
       fluentd = var.fluentd
-      fluentd_buffer_conf = var.fluentd.buffer.customized ? var.fluentd.buffer.custom_value : file("${path.module}/files/fluentd.conf")
+      fluentd_buffer_conf = var.fluentd.buffer.customized ? var.fluentd.buffer.custom_value : file("${path.module}/files/fluentd_buffer.conf")
     }
   )
   patroni_conf = templatefile(
