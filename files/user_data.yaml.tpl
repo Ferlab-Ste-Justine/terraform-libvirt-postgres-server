@@ -115,7 +115,7 @@ write_files:
     owner: root:root
     permissions: "0444"
     content: |
-      ${indent(6, fluentd.forward_ca_cert)}
+      ${indent(6, fluentd.forward.ca_cert)}
 %{ endif ~}
   #Patroni
   - path: /opt/patroni.yml
