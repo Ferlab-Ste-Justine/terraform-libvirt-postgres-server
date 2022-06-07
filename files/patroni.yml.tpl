@@ -45,7 +45,7 @@ bootstrap:
         ssl_key_file: /opt/postgres/pg.key
         log_directory: /var/log/postgresql
 %{ for param in postgres.params ~}
-        ${param.key}:${param.value}
+        ${param.key}: "${param.value}"
 %{ endfor ~}
 
   initdb:
