@@ -50,7 +50,6 @@ This module takes the following variables as input:
     - **organization**: Organization for the certificate
     - **validity_period**: Certificate's validity period in hours
     - **early_renewal_period**: Time before the certificate's expiry when terraform will try to reprovision the certificate
-    - **key_length**: Number of bits the the RSA key that is generated with the server certificate.
 - **etcd**: Patroni etcd backend configuration. Note that the etcd server needs to have the grpc gateway enabled with username/password authentication. It has the following keys:
   - **hosts**: List of etcd hosts, each entry having the ```<ip>:<port>``` format.
   - **ca_cert**: Ca certificate for the etcd servers
@@ -136,7 +135,6 @@ module "postgres_1" {
       organization = "Ferlab"
       validity_period = 100*365*24
       early_renewal_period = 365*24
-      key_length = 4096
     }
   }
   etcd = local.etcd_conf
@@ -189,7 +187,6 @@ module "postgres_2" {
       organization = "Ferlab"
       validity_period = 100*365*24
       early_renewal_period = 365*24
-      key_length = 4096
     }
   }
   etcd = local.etcd_conf
@@ -242,7 +239,6 @@ module "postgres_3" {
       organization = "Ferlab"
       validity_period = 100*365*24
       early_renewal_period = 365*24
-      key_length = 4096
     }
   }
   etcd = local.etcd_conf

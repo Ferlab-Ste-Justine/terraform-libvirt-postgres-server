@@ -1,6 +1,6 @@
 resource "tls_private_key" "pg_key" {
-  algorithm   = "RSA"
-  rsa_bits = var.postgres.certificate.key_length
+  algorithm   = "ECDSA"
+  ecdsa_curve = "P384"
 }
 
 resource "tls_cert_request" "pg_request" {
@@ -31,8 +31,8 @@ resource "tls_locally_signed_cert" "pg_certificate" {
 }
 
 resource "tls_private_key" "patroni_client_key" {
-  algorithm   = "RSA"
-  rsa_bits = var.postgres.certificate.key_length
+  algorithm   = "ECDSA"
+  ecdsa_curve = "P384"
 }
 
 resource "tls_cert_request" "patroni_client_request" {

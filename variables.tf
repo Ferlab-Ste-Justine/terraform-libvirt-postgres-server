@@ -165,7 +165,6 @@ variable "postgres" {
       organization = string,
       validity_period = number,
       early_renewal_period = number,
-      key_length = number,
     }),
   })
 }
