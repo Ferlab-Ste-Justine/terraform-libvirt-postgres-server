@@ -20,6 +20,12 @@ variable "volume_id" {
   type        = string
 }
 
+variable "data_volume_id" {
+  description = "Id for an optional separate disk volume to attach to the vm on postgres' data path"
+  type        = string
+  default     = ""
+}
+
 variable "libvirt_network" {
   description = "Parameters of the libvirt network connection if a libvirt network is used. Has the following parameters: network_id, ip, mac"
   type = object({
@@ -175,7 +181,7 @@ variable "etcd" {
   description = "Etcd configurations"
   sensitive   = true
   type = object({
-      hosts = list(string),
+      endpoints = list(string),
       ca_cert = string,
       username = string,
       password = string,
@@ -197,4 +203,10 @@ variable "patroni" {
     watchdog_safety_margin = number,
     synchronous_node_count = number,
   })
+}
+
+variable "install_dependencies" {
+  description = "Whether to install all dependencies in cloud-init"
+  type = bool
+  default = true
 }

@@ -20,6 +20,7 @@ This module takes the following variables as input:
 - **vcpus**: Number of vcpus to assign to the vm. Defaults to 2.
 - **memory**: Amount of memory in MiB to assign to the vm. Defaults to 8192.
 - **volume_id**: Id of the image volume to attach to the vm. A recent version of ubuntu is recommended as this is what this module has been validated against.
+- **data_volume_id**: Id for an optional separate disk volume to attach to the vm on postgres' data path
 - **libvirt_network**: Parameters to connect to a libvirt network if you opt for that instead of macvtap interfaces. In has the following keys:
   - **ip**: Ip of the vm.
   - **mac**: Mac address of the vm. If none is passed, a random one will be generated.
@@ -52,7 +53,7 @@ This module takes the following variables as input:
     - **validity_period**: Certificate's validity period in hours
     - **early_renewal_period**: Time before the certificate's expiry when terraform will try to reprovision the certificate
 - **etcd**: Patroni etcd backend configuration. Note that the etcd server needs to have the grpc gateway enabled with username/password authentication. It has the following keys:
-  - **hosts**: List of etcd hosts, each entry having the ```<ip>:<port>``` format.
+  - **endpoints**: List of etcd hosts, each entry having the ```<ip>:<port>``` format.
   - **ca_cert**: Ca certificate for the etcd servers
   - **username**: User of the etcd user that patroni will use to connect to etcd.
   - **password**: Password of the etcd user that patroni will use to connect to etcd.
@@ -85,6 +86,7 @@ This module takes the following variables as input:
   - **buffer**: Configuration for the buffering of outgoing fluentd traffic
     - **customized**: Set to false to use the default buffering configurations. If you wish to customize it, set this to true.
     - **custom_value**: Custom buffering configuration to provide that will override the default one. Should be valid fluentd configuration syntax, including the opening and closing ```<buffer>``` tags.
+- **install_dependencies**: Whether cloud-init should install external dependencies (should be set to false if you already provide an image with the external dependencies built-in).
 
 ## Example
 
@@ -94,7 +96,7 @@ Below is an orchestration I ran locally to troubleshoot the module.
 
 locals {
   etcd_conf = {
-    hosts = ["192.168.122.155:2379", "192.168.122.156:2379", "192.168.122.157:2379"]
+    endpoints = ["192.168.122.155:2379", "192.168.122.156:2379", "192.168.122.157:2379"]
     ca_cert = file("${path.module}/../shared/etcd-ca.pem")
     username = etcd_user.patroni.username
     password = etcd_user.patroni.password
