@@ -1,35 +1,54 @@
 locals {
   cloud_init_volume_name = var.cloud_init_volume_name == "" ? "${var.name}-cloud-init.iso" : var.cloud_init_volume_name
-  network_interfaces = length(var.macvtap_interfaces) == 0 ? [{
-    network_name = var.libvirt_network.network_name != "" ? var.libvirt_network.network_name : null
-    network_id = var.libvirt_network.network_id != "" ? var.libvirt_network.network_id : null
-    macvtap = null
-    addresses = [var.libvirt_network.ip]
-    mac = var.libvirt_network.mac != "" ? var.libvirt_network.mac : null
-    hostname = var.name
-  }] : [for macvtap_interface in var.macvtap_interfaces: {
-    network_name = null
-    network_id = null
-    macvtap = macvtap_interface.interface
-    addresses = null
-    mac = macvtap_interface.mac
-    hostname = null
-  }]
-  ips = length(var.macvtap_interfaces) == 0 ? [
-    var.libvirt_network.ip
-  ] : [
-    for macvtap_interface in var.macvtap_interfaces: macvtap_interface.ip
-  ]
+  network_interfaces = concat(
+    [for libvirt_network in var.libvirt_networks: {
+      network_name = libvirt_network.network_name != "" ? libvirt_network.network_name : null
+      network_id = libvirt_network.network_id != "" ? libvirt_network.network_id : null
+      macvtap = null
+      addresses = null
+      mac = libvirt_network.mac
+      hostname = null
+    }],
+    [for macvtap_interface in var.macvtap_interfaces: {
+      network_name = null
+      network_id = null
+      macvtap = macvtap_interface.interface
+      addresses = null
+      mac = macvtap_interface.mac
+      hostname = null
+    }]
+  )
+  ips = concat(
+    [for libvirt_network in var.libvirt_networks: libvirt_network.ip],
+    [for macvtap_interface in var.macvtap_interfaces: macvtap_interface.ip]
+  )
   volumes = var.data_volume_id != "" ? [var.volume_id, var.data_volume_id] : [var.volume_id]
 }
 
 module "network_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//network?ref=main"
-  network_interfaces = var.macvtap_interfaces
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//network?ref=v0.8.0"
+  network_interfaces = concat(
+    [for idx, libvirt_network in var.libvirt_networks: {
+      ip = libvirt_network.ip
+      gateway = libvirt_network.gateway
+      prefix_length = libvirt_network.prefix_length
+      interface = "libvirt${idx}"
+      mac = libvirt_network.mac
+      dns_servers = libvirt_network.dns_servers
+    }],
+    [for idx, macvtap_interface in var.macvtap_interfaces: {
+      ip = macvtap_interface.ip
+      gateway = macvtap_interface.gateway
+      prefix_length = macvtap_interface.prefix_length
+      interface = "macvtap${idx}"
+      mac = macvtap_interface.mac
+      dns_servers = macvtap_interface.dns_servers
+    }]
+  )
 }
 
 module "postgres_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//postgres?ref=main"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//postgres?ref=v0.8.0"
   install_dependencies = var.install_dependencies
   advertise_ip = local.ips.0
   etcd = var.etcd
@@ -63,12 +82,12 @@ module "postgres_configs" {
 }
 
 module "prometheus_node_exporter_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//prometheus-node-exporter?ref=main"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//prometheus-node-exporter?ref=v0.8.0"
   install_dependencies = var.install_dependencies
 }
 
 module "chrony_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//chrony?ref=main"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//chrony?ref=v0.8.0"
   install_dependencies = var.install_dependencies
   chrony = {
     servers  = var.chrony.servers
@@ -78,7 +97,7 @@ module "chrony_configs" {
 }
 
 module "fluentd_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//fluentd?ref=main"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//fluentd?ref=v0.8.0"
   install_dependencies = var.install_dependencies
   fluentd = {
     docker_services = []
@@ -98,7 +117,7 @@ module "fluentd_configs" {
 }
 
 module "data_volume_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//data-volumes?ref=main"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//data-volumes?ref=v0.8.0"
   volumes = [{
     label         = "postgres_data"
     device        = "vdb"
@@ -168,7 +187,7 @@ data "template_cloudinit_config" "user_data" {
 resource "libvirt_cloudinit_disk" "postgres" {
   name           = local.cloud_init_volume_name
   user_data      = data.template_cloudinit_config.user_data.rendered
-  network_config = length(var.macvtap_interfaces) > 0 ? module.network_configs.configuration : null
+  network_config = module.network_configs.configuration
   pool           = var.cloud_init_volume_pool
 }
 
