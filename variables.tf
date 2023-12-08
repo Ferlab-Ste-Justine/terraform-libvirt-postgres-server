@@ -113,29 +113,32 @@ variable "chrony" {
   }
 }
 
-variable "fluentd" {
-  description = "Fluentd configurations"
-  sensitive   = true
+variable "fluentbit" {
+  description = "Fluent-bit configuration"
   type = object({
-    enabled = bool,
-    patroni_tag = string,
-    node_exporter_tag = string,
+    enabled = bool
+    patroni_tag = string
+    node_exporter_tag = string
+    metrics = object({
+      enabled = bool
+      port    = number
+    })
     forward = object({
-      domain = string,
-      port = number,
-      hostname = string,
-      shared_key = string,
-      ca_cert = string,
-    }),
-    buffer = object({
-      customized = bool,
-      custom_value = string,
+      domain = string
+      port = number
+      hostname = string
+      shared_key = string
+      ca_cert = string
     })
   })
   default = {
     enabled = false
     patroni_tag = ""
     node_exporter_tag = ""
+    metrics = {
+      enabled = false
+      port = 0
+    }
     forward = {
       domain = ""
       port = 0
@@ -143,10 +146,65 @@ variable "fluentd" {
       shared_key = ""
       ca_cert = ""
     }
-    buffer = {
-      customized = false
-      custom_value = ""
+  }
+}
+
+variable "fluentbit_dynamic_config" {
+  description = "Parameters for fluent-bit dynamic config if it is enabled"
+  type = object({
+    enabled = bool
+    source  = string
+    etcd    = object({
+      key_prefix     = string
+      endpoints      = list(string)
+      ca_certificate = string
+      client         = object({
+        certificate = string
+        key         = string
+        username    = string
+        password    = string
+      })
+    })
+    git     = object({
+      repo             = string
+      ref              = string
+      path             = string
+      trusted_gpg_keys = list(string)
+      auth             = object({
+        client_ssh_key         = string
+        server_ssh_fingerprint = string
+      })
+    })
+  })
+  default = {
+    enabled = false
+    source = "etcd"
+    etcd = {
+      key_prefix     = ""
+      endpoints      = []
+      ca_certificate = ""
+      client         = {
+        certificate = ""
+        key         = ""
+        username    = ""
+        password    = ""
+      }
     }
+    git  = {
+      repo             = ""
+      ref              = ""
+      path             = ""
+      trusted_gpg_keys = []
+      auth             = {
+        client_ssh_key         = ""
+        server_ssh_fingerprint = ""
+      }
+    }
+  }
+
+  validation {
+    condition     = contains(["etcd", "git"], var.fluentbit_dynamic_config.source)
+    error_message = "fluentbit_dynamic_config.source must be 'etcd' or 'git'."
   }
 }
 

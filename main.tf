@@ -1,4 +1,6 @@
 locals {
+  fluentbit_updater_etcd = var.fluentbit.enabled && var.fluentbit_dynamic_config.enabled && var.fluentbit_dynamic_config.source == "etcd"
+  fluentbit_updater_git = var.fluentbit.enabled && var.fluentbit_dynamic_config.enabled && var.fluentbit_dynamic_config.source == "git"
   cloud_init_volume_name = var.cloud_init_volume_name == "" ? "${var.name}-cloud-init.iso" : var.cloud_init_volume_name
   network_interfaces = concat(
     [for libvirt_network in var.libvirt_networks: {
@@ -96,23 +98,80 @@ module "chrony_configs" {
   }
 }
 
-module "fluentd_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//fluentd?ref=v0.8.0"
+module "fluentbit_updater_etcd_configs" {
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//configurations-auto-updater?ref=v0.14.0"
   install_dependencies = var.install_dependencies
-  fluentd = {
-    docker_services = []
+  filesystem = {
+    path = "/etc/fluent-bit-customization/dynamic-config"
+    files_permission = "700"
+    directories_permission = "700"
+  }
+  etcd = {
+    key_prefix = var.fluentbit_dynamic_config.etcd.key_prefix
+    endpoints = var.fluentbit_dynamic_config.etcd.endpoints
+    connection_timeout = "60s"
+    request_timeout = "60s"
+    retry_interval = "4s"
+    retries = 15
+    auth = {
+      ca_certificate = var.fluentbit_dynamic_config.etcd.ca_certificate
+      client_certificate = var.fluentbit_dynamic_config.etcd.client.certificate
+      client_key = var.fluentbit_dynamic_config.etcd.client.key
+      username = var.fluentbit_dynamic_config.etcd.client.username
+      password = var.fluentbit_dynamic_config.etcd.client.password
+    }
+  }
+  notification_command = {
+    command = ["/usr/local/bin/reload-fluent-bit-configs"]
+    retries = 30
+  }
+  naming = {
+    binary = "fluent-bit-config-updater"
+    service = "fluent-bit-config-updater"
+  }
+  user = "fluentbit"
+}
+
+module "fluentbit_updater_git_configs" {
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//gitsync?ref=v0.14.0"
+  install_dependencies = var.install_dependencies
+  filesystem = {
+    path = "/etc/fluent-bit-customization/dynamic-config"
+    files_permission = "700"
+    directories_permission = "700"
+  }
+  git = var.fluentbit_dynamic_config.git
+  notification_command = {
+    command = ["/usr/local/bin/reload-fluent-bit-configs"]
+    retries = 30
+  }
+  naming = {
+    binary = "fluent-bit-config-updater"
+    service = "fluent-bit-config-updater"
+  }
+  user = "fluentbit"
+}
+
+module "fluentbit_configs" {
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//fluent-bit?ref=v0.14.0"
+  install_dependencies = var.install_dependencies
+  fluentbit = {
+    metrics = var.fluentbit.metrics
     systemd_services = [
       {
-        tag     = var.fluentd.patroni_tag
-        service = "patroni"
+        tag     = var.fluentbit.patroni_tag
+        service = "patroni.service"
       },
       {
-        tag     = var.fluentd.node_exporter_tag
-        service = "node-exporter"
+        tag = var.fluentbit.node_exporter_tag
+        service = "node-exporter.service"
       }
     ]
-    forward = var.fluentd.forward,
-    buffer = var.fluentd.buffer
+    forward = var.fluentbit.forward
+  }
+  dynamic_config = {
+    enabled = var.fluentbit_dynamic_config.enabled
+    entrypoint_path = "/etc/fluent-bit-customization/dynamic-config/index.conf"
   }
 }
 
@@ -158,10 +217,20 @@ locals {
       content_type = "text/cloud-config"
       content      = module.chrony_configs.configuration
     }] : [],
-    var.fluentd.enabled ? [{
-      filename     = "fluentd.cfg"
+    local.fluentbit_updater_etcd ? [{
+      filename     = "fluent_bit_updater.cfg"
       content_type = "text/cloud-config"
-      content      = module.fluentd_configs.configuration
+      content      = module.fluentbit_updater_etcd_configs.configuration
+    }] : [],
+    local.fluentbit_updater_git ? [{
+      filename     = "fluent_bit_updater.cfg"
+      content_type = "text/cloud-config"
+      content      = module.fluentbit_updater_git_configs.configuration
+    }] : [],
+    var.fluentbit.enabled ? [{
+      filename     = "fluent_bit.cfg"
+      content_type = "text/cloud-config"
+      content      = module.fluentbit_configs.configuration
     }] : [],
     var.data_volume_id != "" ? [{
       filename     = "data_volume.cfg"
