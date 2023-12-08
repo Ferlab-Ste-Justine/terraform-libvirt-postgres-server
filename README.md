@@ -82,7 +82,6 @@ This module takes the following variables as input:
   - **node_exporter_tag**: Tag for logs from the Prometheus node exporter.
   - **metrics**: Configuration for metrics collection.
   - **forward**: Configuration for the forward plugin to communicate with a remote Fluentbit node. Includes domain, port, hostname, shared key, and CA certificate.
-  - **buffer**: Buffer configuration for outgoing Fluent Bit traffic.
 - **fluentbit_dynamic_config**: Configuration for dynamic Fluent Bit setup. Includes:
   - **enabled**: Whether dynamic config is enabled.
   - **source**: The source of dynamic configuration (e.g., 'etcd', 'git').
