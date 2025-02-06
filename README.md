@@ -70,205 +70,66 @@ This module takes the following variables as input:
   - **master_start_timeout**: Amount of time (in seconds) a failing master has to recover before patroni demotes it as leader.
   - **master_stop_timeout**: Amount of time (in seconds) patroni will wait after a shutdown trigger before sending SIGKILL to the postgres server it manages.
   - **watchdog_safety_margin**: Safety margin before leader lock ttl expire where watchdown will force master shutdown to prevent split brain. See documentation for usager: https://patroni.readthedocs.io/en/latest/watchdog.html
-  - **synchronous_node_count**: Number of additional nodes a transaction commit should be writen to in addition to the master to report a success.
+  - **is_synchronous**: Boolean indicating whether synchronous synchronization should be used between the leader and the replicas.
+  - **synchronous_settings**: Settings if the synchronization is synchronous. It has the following keys:
+    - **strict**: Boolean indicating whether the synchronous synchronization is strict or not.
+    - **synchronous_node_count**: Number of additional nodes a transaction commit should be writen to in addition to the leader to report a success.
+  - **asynchronous_settings**: Settings if the synchronization is asynchronous. It has the following keys:
+    - **maximum_lag_on_failover**: Maximum WAL lag in bytes a replica is allowed to have in order to be considered for leadership when cluster leadership is lost.
 - **chrony**: Optional chrony configuration for when you need a more fine-grained ntp setup on your vm. It is an object with the following fields:
   - **enabled**: If set the false (the default), chrony will not be installed and the vm ntp settings will be left to default.
   - **servers**: List of ntp servers to sync from with each entry containing two properties, **url** and **options** (see: https://chrony.tuxfamily.org/doc/4.2/chrony.conf.html#server)
   - **pools**: A list of ntp server pools to sync from with each entry containing two properties, **url** and **options** (see: https://chrony.tuxfamily.org/doc/4.2/chrony.conf.html#pool)
   - **makestep**: An object containing remedial instructions if the clock of the vm is significantly out of sync at startup. It is an object containing two properties, **threshold** and **limit** (see: https://chrony.tuxfamily.org/doc/4.2/chrony.conf.html#makestep)
-- **fluentbit**: Fluent Bit configuration for log routing and metrics collection. This includes:
-  - **enabled**: If set to false (the default), Fluent Bit will not be installed.
-  - **patroni_tag**: Tag to assign to logs coming from Patroni.
-  - **node_exporter_tag**: Tag for logs from the Prometheus node exporter.
-  - **metrics**: Configuration for metrics collection.
-  - **forward**: Configuration for the forward plugin to communicate with a remote Fluentbit node. Includes domain, port, hostname, shared key, and CA certificate.
-- **fluentbit_dynamic_config**: Configuration for dynamic Fluent Bit setup. Includes:
-  - **enabled**: Whether dynamic config is enabled.
-  - **source**: The source of dynamic configuration (e.g., 'etcd', 'git').
-  - **etcd**: Configuration for etcd as a source.
-  - **git**: Configuration for Git as a source.
+- **fluentbit**: Optional fluend configuration to securely route logs to a fluend/fluent-bit node using the forward plugin. Alternatively, configuration can be 100% dynamic by specifying the parameters of an etcd store to fetch the configuration from. It has the following keys:
+  - **enabled**: If set the false (the default), fluent-bit will not be installed.
+  - **patroni_tag**: Tag to assign to logs coming from patroni
+  - **node_exporter_tag** Tag to assign to logs coming from the prometheus node exporter
+  - **forward**: Configuration for the forward plugin that will talk to the external fluend/fluent-bit node. It has the following keys:
+    - **domain**: Ip or domain name of the remote fluend node.
+    - **port**: Port the remote fluend node listens on
+    - **hostname**: Unique hostname identifier for the vm
+    - **shared_key**: Secret shared key with the remote fluentd node to authentify the client
+    - **ca_cert**: CA certificate that signed the remote fluentd node's server certificate (used to authentify it)
+- **fluentbit_dynamic_config**: Optional configuration to update fluent-bit configuration dynamically either from an etcd key prefix or a path in a git repo.
+  - **enabled**: Boolean flag to indicate whether dynamic configuration is enabled at all. If set to true, configurations will be set dynamically. The default configurations can still be referenced as needed by the dynamic configuration. They are at the following paths:
+    - **Global Service Configs**: /etc/fluent-bit-customization/default-config/service.conf
+    - **Default Variables**: /etc/fluent-bit-customization/default-config/default-variables.conf
+    - **Systemd Inputs**: /etc/fluent-bit-customization/default-config/inputs.conf
+    - **Forward Output For All Inputs**: /etc/fluent-bit-customization/default-config/output-all.conf
+    - **Forward Output For Default Inputs Only**: /etc/fluent-bit-customization/default-config/output-default-sources.conf
+  - **source**: Indicates the source of the dynamic config. Can be either **etcd** or **git**.
+  - **etcd**: Parameters to fetch fluent-bit configurations dynamically from an etcd cluster. It has the following keys:
+    - **key_prefix**: Etcd key prefix to search for fluent-bit configuration
+    - **endpoints**: Endpoints of the etcd cluster. Endpoints should have the format `<ip>:<port>`
+    - **ca_certificate**: CA certificate against which the server certificates of the etcd cluster will be verified for authenticity
+    - **client**: Client authentication. It takes the following keys:
+      - **certificate**: Client tls certificate to authentify with. To be used for certificate authentication.
+      - **key**: Client private tls key to authentify with. To be used for certificate authentication.
+      - **username**: Client's username. To be used for username/password authentication.
+      - **password**: Client's password. To be used for username/password authentication.
+    - **vault_agent_secret_path**: Optional vault secret path for an optional vault agent to renew the etcd client credentials. The secret in vault is expected to have the **certificate** and **key** keys if certificate authentication is used or the **username** and **password** keys if password authentication is used.
+  - **git**: Parameters to fetch fluent-bit configurations dynamically from an git repo. It has the following keys:
+    - **repo**: Url of the git repository. It should have the ssh format.
+    - **ref**: Git reference (usually branch) to checkout in the repository
+    - **path**: Path to sync from in the git repository. If the empty string is passed, syncing will happen from the root of the repository.
+    - **trusted_gpg_keys**: List of trusted gpp keys to verify the signature of the top commit. If an empty list is passed, the commit signature will not be verified.
+    - **auth**: Authentication to the git server. It should have the following keys:
+      - **client_ssh_key** Private client ssh key to authentication to the server.
+      - **server_ssh_fingerprint**: Public ssh fingerprint of the server that will be used to authentify it.
+- **vault_agent**: Parameters for the optional vault agent that will be used to manage the dynamic secrets in the vm.
+  - **enabled**: If set to true, a vault agent service will be setup and will run in the vm.
+  - **auth_method**: Auth method the vault agent will use to authenticate with vault. Currently, only approle is supported.
+    - **config**: Configuration parameters for the auth method.
+      - **role_id**: Id of the app role to us.
+      - **secret_id**: Authentication secret to use the app role.
+  - **vault_address**: Endpoint to use to talk to vault.
+  - **vault_ca_cert**: CA certificate to use to validate vault's certificate.
 - **install_dependencies**: Whether cloud-init should install external dependencies (should be set to false if you already provide an image with the external dependencies built-in).
 
 ## Example
 
-Below is an orchestration I ran locally to troubleshoot the module.
-
-```
-
-locals {
-  etcd_conf = {
-    endpoints = ["192.168.122.155:2379", "192.168.122.156:2379", "192.168.122.157:2379"]
-    ca_cert = file("${path.module}/../shared/etcd-ca.pem")
-    username = etcd_user.patroni.username
-    password = etcd_user.patroni.password
-  }
-}
-
-resource "libvirt_volume" "postgres_1" {
-  name             = "postgres-1"
-  pool             = "default"
-  // 50 GiB
-  size             = 10 * 1024 * 1024 * 1024
-  base_volume_pool = "os"
-  base_volume_name = "ubuntu-focal-2021-04-29"
-  format           = "qcow2"
-}
-
-module "postgres_1" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/kvm-postgres-server.git"
-  name = "postgres-1"
-  vcpus = 1
-  memory = 4096
-  volume_id = libvirt_volume.postgres_1.id
-  libvirt_networks = [{
-    network_id = "b10c1bda-f608-4780-9cfb-574c2271a193"
-    ip = "192.168.122.158"
-    mac = "52:54:00:DE:E3:67"
-    gateway = local.params.network.gateway
-    dns_servers = [local.params.network.dns]
-    prefix_length = split("/", local.params.network.addresses).1
-  }]
-  cloud_init_volume_pool = "default"
-  ssh_admin_public_key = tls_private_key.admin_ssh.public_key_openssh
-  admin_user_password = "mockpass"
-  postgres = {
-    params = []
-    replicator_password = random_password.postgres_root_password.result
-    superuser_password = random_password.postgres_root_password.result
-    ca = module.postgres_ca
-    certificate = {
-      domains = ["server.postgres.local", "load-balancer.postgres.local", "192.168.122.162"]
-      extra_ips = ["192.168.122.162"]
-      organization = "Ferlab"
-      validity_period = 100*365*24
-      early_renewal_period = 365*24
-    }
-  }
-  etcd = local.etcd_conf
-  patroni = {
-    scope = "patroni"
-    namespace = "/patroni/"
-    name = "postgres-1"
-    ttl = 60
-    loop_wait = 5
-    retry_timeout = 10
-    master_start_timeout = 300
-    master_stop_timeout = 300
-    watchdog_safety_margin = -1
-    synchronous_node_count = 1
-  }
-}
-
-resource "libvirt_volume" "postgres_2" {
-  name             = "postgres-2"
-  pool             = "default"
-  // 50 GiB
-  size             = 10 * 1024 * 1024 * 1024
-  base_volume_pool = "os"
-  base_volume_name = "ubuntu-focal-2021-04-29"
-  format           = "qcow2"
-}
-
-module "postgres_2" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/kvm-postgres-server.git"
-  name = "postgres-2"
-  vcpus = 1
-  memory = 4096
-  volume_id = libvirt_volume.postgres_2.id
-  libvirt_networks = [{
-    network_id = "b10c1bda-f608-4780-9cfb-574c2271a193"
-    ip = "192.168.122.159"
-    mac = "52:54:00:DE:E3:68"
-    gateway = local.params.network.gateway
-    dns_servers = [local.params.network.dns]
-    prefix_length = split("/", local.params.network.addresses).1
-  }]
-  cloud_init_volume_pool = "default"
-  ssh_admin_public_key = tls_private_key.admin_ssh.public_key_openssh
-  admin_user_password = "mockpass"
-  postgres = {
-    params = []
-    replicator_password = random_password.postgres_root_password.result
-    superuser_password = random_password.postgres_root_password.result
-    ca = module.postgres_ca
-    certificate = {
-      domains = ["server.postgres.local", "load-balancer.postgres.local", "192.168.122.162"]
-      extra_ips = ["192.168.122.162"]
-      organization = "Ferlab"
-      validity_period = 100*365*24
-      early_renewal_period = 365*24
-    }
-  }
-  etcd = local.etcd_conf
-  patroni = {
-    scope = "patroni"
-    namespace = "/patroni/"
-    name = "postgres-2"
-    ttl = 60
-    loop_wait = 5
-    retry_timeout = 10
-    master_start_timeout = 300
-    master_stop_timeout = 300
-    watchdog_safety_margin = -1
-    synchronous_node_count = 1
-  }
-}
-
-resource "libvirt_volume" "postgres_3" {
-  name             = "postgres-3"
-  pool             = "default"
-  // 50 GiB
-  size             = 10 * 1024 * 1024 * 1024
-  base_volume_pool = "os"
-  base_volume_name = "ubuntu-focal-2021-04-29"
-  format           = "qcow2"
-}
-
-module "postgres_3" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/kvm-postgres-server.git"
-  name = "postgres-3"
-  vcpus = 1
-  memory = 4096
-  volume_id = libvirt_volume.postgres_3.id
-  libvirt_networks = [{
-    network_id = "b10c1bda-f608-4780-9cfb-574c2271a193"
-    ip = "192.168.122.160"
-    mac = "52:54:00:DE:E3:69"
-    gateway = local.params.network.gateway
-    dns_servers = [local.params.network.dns]
-    prefix_length = split("/", local.params.network.addresses).1
-  }]
-  cloud_init_volume_pool = "default"
-  ssh_admin_public_key = tls_private_key.admin_ssh.public_key_openssh
-  admin_user_password = "mockpass"
-  postgres = {
-    params = []
-    replicator_password = random_password.postgres_root_password.result
-    superuser_password = random_password.postgres_root_password.result
-    ca = module.postgres_ca
-    certificate = {
-      domains = ["server.postgres.local", "load-balancer.postgres.local", "192.168.122.162"]
-      extra_ips = ["192.168.122.162"]
-      organization = "Ferlab"
-      validity_period = 100*365*24
-      early_renewal_period = 365*24
-    }
-  }
-  etcd = local.etcd_conf
-  patroni = {
-    scope = "patroni"
-    namespace = "/patroni/"
-    name = "postgres-3"
-    ttl = 60
-    loop_wait = 5
-    retry_timeout = 10
-    master_start_timeout = 300
-    master_stop_timeout = 300
-    watchdog_safety_margin = -1
-    synchronous_node_count = 1
-  }
-}
-```
+For an example of a patroni cluster that can be run locally with this module, see: https://github.com/Ferlab-Ste-Justine/kvm-dev-orchestrations/tree/main/postgres
 
 ## Gotchas
 

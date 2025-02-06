@@ -27,17 +27,22 @@ variable "data_volume_id" {
 }
 
 variable "libvirt_networks" {
-  description = "Parameters of libvirt network connections if a libvirt networks are used."
+  description = "Parameters of libvirt network connections if libvirt networks are used."
   type = list(object({
-    network_name = string
-    network_id = string
+    network_name = optional(string, "")
+    network_id = optional(string, "")
     prefix_length = string
     ip = string
     mac = string
-    gateway = string
-    dns_servers = list(string)
+    gateway = optional(string, "")
+    dns_servers = optional(list(string), [])
   }))
   default = []
+
+  validation {
+    condition     = alltrue([for net in var.libvirt_networks: net.prefix_length != "" && net.ip != "" && net.mac != "" && ((net.network_name != "" && net.network_id == "") || (net.network_name == "" && net.network_id != ""))])
+    error_message = "Each entry in libvirt_networks must have the following keys defined and not empty: prefix_length, ip, mac, network_name xor network_id"
+  }
 }
 
 variable "macvtap_interfaces" {
@@ -47,10 +52,15 @@ variable "macvtap_interfaces" {
     prefix_length = string
     ip            = string
     mac           = string
-    gateway       = string
-    dns_servers   = list(string)
+    gateway       = optional(string, "")
+    dns_servers   = optional(list(string), [])
   }))
   default = []
+
+  validation {
+    condition     = alltrue([for int in var.macvtap_interfaces: int.interface != "" && int.prefix_length != "" && int.ip != "" && int.mac != ""])
+    error_message = "Each entry in macvtap_interfaces must have the following keys defined and not empty: interface, prefix_length, ip, mac"
+  }
 }
 
 variable "cloud_init_volume_pool" {
@@ -115,13 +125,17 @@ variable "chrony" {
 
 variable "fluentbit" {
   description = "Fluent-bit configuration"
+  sensitive = true
   type = object({
     enabled = bool
     patroni_tag = string
     node_exporter_tag = string
-    metrics = object({
+    metrics = optional(object({
       enabled = bool
       port    = number
+    }), {
+      enabled = false
+      port = 0
     })
     forward = object({
       domain = string
@@ -149,12 +163,37 @@ variable "fluentbit" {
   }
 }
 
+variable "vault_agent" {
+  type = object({
+    enabled = bool
+    auth_method = object({
+      config = object({
+        role_id   = string
+        secret_id = string
+      })
+    })
+    vault_address   = string
+    vault_ca_cert   = string
+  })
+  default = {
+    enabled = false
+    auth_method = {
+      config = {
+        role_id   = ""
+        secret_id = ""
+      }
+    }
+    vault_address = ""
+    vault_ca_cert = ""
+  }
+}
+
 variable "fluentbit_dynamic_config" {
   description = "Parameters for fluent-bit dynamic config if it is enabled"
   type = object({
     enabled = bool
     source  = string
-    etcd    = object({
+    etcd    = optional(object({
       key_prefix     = string
       endpoints      = list(string)
       ca_certificate = string
@@ -164,8 +203,20 @@ variable "fluentbit_dynamic_config" {
         username    = string
         password    = string
       })
+      vault_agent_secret_path = optional(string, "")
+    }), {
+      key_prefix     = ""
+      endpoints      = []
+      ca_certificate = ""
+      client         = {
+        certificate = ""
+        key         = ""
+        username    = ""
+        password    = ""
+      }
+      vault_agent_secret_path = ""
     })
-    git     = object({
+    git     = optional(object({
       repo             = string
       ref              = string
       path             = string
@@ -174,6 +225,15 @@ variable "fluentbit_dynamic_config" {
         client_ssh_key         = string
         server_ssh_fingerprint = string
       })
+    }), {
+      repo             = ""
+      ref              = ""
+      path             = ""
+      trusted_gpg_keys = []
+      auth             = {
+        client_ssh_key         = ""
+        server_ssh_fingerprint = ""
+      }
     })
   })
   default = {
@@ -189,6 +249,7 @@ variable "fluentbit_dynamic_config" {
         username    = ""
         password    = ""
       }
+      vault_agent_secret_path = ""
     }
     git  = {
       repo             = ""
@@ -212,10 +273,10 @@ variable "postgres" {
   description = "Postgres configurations"
   sensitive   = true
   type = object({
-    params = list(object({
+    params = optional(list(object({
       key = string,
       value = string,
-    })),
+    })), []),
     replicator_password = string,
     superuser_password = string,
     ca = object({
@@ -257,7 +318,20 @@ variable "patroni" {
     master_start_timeout = number,
     master_stop_timeout = number,
     watchdog_safety_margin = number,
-    synchronous_node_count = number,
+    is_synchronous         = bool,
+    synchronous_settings   = optional(object({
+      strict = bool
+      synchronous_node_count = number
+    }), {
+      strict = true
+      synchronous_node_count = 1
+    }),
+    asynchronous_settings  = optional(object({
+      maximum_lag_on_failover = number
+    }), {
+      //1MB
+      maximum_lag_on_failover = 1048576
+    })
   })
 }
 
