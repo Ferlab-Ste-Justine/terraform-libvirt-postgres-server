@@ -1,6 +1,6 @@
 # About
 
-This is a terraform module that provisions a postgres server that is part of a patroni high availability cluster. The settings are configured for synchronous replication with the emphasis placed on data consistency and durability above availability when the two goals are at odds.
+This is a terraform module that provisions a postgres server that is part of a patroni high availability cluster. Depending on the input values passed, replication can be either synchronous (strict or not) or asynchronous. See the patroni documentation for the tradeoffs between the replication modes.
 
 Given a certificate authority, it will generate its server-side certificate and key to server traffic over tls.
 
