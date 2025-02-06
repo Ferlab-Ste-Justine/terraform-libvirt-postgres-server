@@ -2,8 +2,6 @@
 
 This is a terraform module that provisions a postgres server that is part of a patroni high availability cluster. Depending on the input values passed, replication can be either synchronous (strict or not) or asynchronous. See the patroni documentation for the tradeoffs between the replication modes.
 
-Given a certificate authority, it will generate its server-side certificate and key to server traffic over tls.
-
 Given that it is the common denominator for all the clients we are using, only password authentication is supported for now. The module will take a password as an argument for its superuser account.
 
 # Libvirt Networking Support
