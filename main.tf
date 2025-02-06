@@ -57,9 +57,9 @@ module "postgres_configs" {
   postgres = {
     replicator_password = var.postgres.replicator_password
     superuser_password  = var.postgres.superuser_password
-    ca_cert             = var.postgres.ca.certificate
-    server_cert         = "${tls_locally_signed_cert.pg_certificate.cert_pem}\n${var.postgres.ca.certificate}"
-    server_key          = tls_private_key.pg_key.private_key_pem
+    ca_cert             = var.postgres.ca_certificate
+    server_cert         = "${var.postgres.server_certificate}\n${var.postgres.ca_certificate}"
+    server_key          = var.postgres.server_key
     params              = var.postgres.params
   }
   patroni = {
@@ -76,11 +76,11 @@ module "postgres_configs" {
     synchronous_settings   = var.patroni.synchronous_settings
     asynchronous_settings  = var.patroni.asynchronous_settings
     api                    = {
-      ca_cert       = var.postgres.ca.certificate
-      server_cert   = "${tls_locally_signed_cert.pg_certificate.cert_pem}\n${var.postgres.ca.certificate}"
-      server_key    = tls_private_key.pg_key.private_key_pem
-      client_cert   = tls_private_key.patroni_client_key.private_key_pem
-      client_key    = tls_locally_signed_cert.patroni_client_certificate.cert_pem
+      ca_cert       = var.postgres.ca_certificate
+      server_cert   = "${var.postgres.server_certificate}\n${var.postgres.ca_certificate}"
+      server_key    = var.postgres.server_key
+      client_cert   = var.patroni.client_certificate
+      client_key    = var.patroni.client_key
     }
   }
   patroni_version = "4.0.4"   

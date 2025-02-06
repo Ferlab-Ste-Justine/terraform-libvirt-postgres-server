@@ -45,16 +45,9 @@ This module takes the following variables as input:
   - **params**: List of postgres parameters represented by **key** and **value** keys for each entry. Note that the master will set those values in etcd and it will be shared by all members. Given that which node will be elected the leader is random, it should be set the same in all members.
   - **replicator_password**: Password for the replicator user.
   - **superuser_password**: Password for the postgres superuser
-  - **ca**: Pre-existing internal ca that will sign the postgres server certificates. It has the following keys:
-    - **key**: Private key of the ca
-    - **key_algorithmn**: Algorithm of the ca's private key
-    - **certificate**: Public certificate of the ca
-  - **certificate**: Parameters of the generated certificate for the server. It has the following keys:
-    - **domains**: Domains the service certificate is for
-    - **extra_ips**: Extra ips that will also be included in the certificate
-    - **organization**: Organization for the certificate
-    - **validity_period**: Certificate's validity period in hours
-    - **early_renewal_period**: Time before the certificate's expiry when terraform will try to reprovision the certificate
+  - **ca_certificate**: CA certificate used to signed all server and client TLS certificates for postgres and patroni
+  - **server_certificate**: Server tls certificate used for both postgres and the patroni api.
+  - **server_key**: Private server key used for both postgres and the patroni api.
 - **etcd**: Patroni etcd backend configuration. Note that the etcd server needs to have the grpc gateway enabled with username/password authentication. It has the following keys:
   - **endpoints**: List of etcd hosts, each entry having the ```<ip>:<port>``` format.
   - **ca_cert**: Ca certificate for the etcd servers
@@ -76,6 +69,8 @@ This module takes the following variables as input:
     - **synchronous_node_count**: Number of additional nodes a transaction commit should be writen to in addition to the leader to report a success.
   - **asynchronous_settings**: Settings if the synchronization is asynchronous. It has the following keys:
     - **maximum_lag_on_failover**: Maximum WAL lag in bytes a replica is allowed to have in order to be considered for leadership when cluster leadership is lost.
+  - **client_certificate**: Client certificate signed with the postgres CA that patroni will use to authentify itself to patroni endpoints of the cluster.
+  - **client_key**: Client key used to sign the certificate
 - **chrony**: Optional chrony configuration for when you need a more fine-grained ntp setup on your vm. It is an object with the following fields:
   - **enabled**: If set the false (the default), chrony will not be installed and the vm ntp settings will be left to default.
   - **servers**: List of ntp servers to sync from with each entry containing two properties, **url** and **options** (see: https://chrony.tuxfamily.org/doc/4.2/chrony.conf.html#server)

@@ -279,18 +279,9 @@ variable "postgres" {
     })), []),
     replicator_password = string,
     superuser_password = string,
-    ca = object({
-      key = string,
-      key_algorithm = string, 
-      certificate = string,
-    }),
-    certificate = object({
-      domains = list(string),
-      extra_ips = list(string),
-      organization = string,
-      validity_period = number,
-      early_renewal_period = number,
-    }),
+    ca_certificate = string,
+    server_certificate = string,
+    server_key = string,
   })
 }
 
@@ -331,7 +322,9 @@ variable "patroni" {
     }), {
       //1MB
       maximum_lag_on_failover = 1048576
-    })
+    }),
+    client_certificate = string,
+    client_key = string,
   })
 }
 
