@@ -83,7 +83,7 @@ module "postgres_configs" {
       client_key    = var.patroni.client_key
     }
   }
-  patroni_version = "4.0.4"   
+  patroni_version = var.patroni_version
 }
 
 module "prometheus_node_exporter_configs" {

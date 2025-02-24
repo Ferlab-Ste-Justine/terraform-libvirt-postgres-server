@@ -69,6 +69,7 @@ This module takes the following variables as input:
     - **maximum_lag_on_failover**: Maximum WAL lag in bytes a replica is allowed to have in order to be considered for leadership when cluster leadership is lost.
   - **client_certificate**: Client certificate signed with the postgres CA that patroni will use to authentify itself to patroni endpoints of the cluster.
   - **client_key**: Client key used to sign the certificate
+- **patroni_version**: Version of patroni to install. Defaults to **4.0.4**.
 - **chrony**: Optional chrony configuration for when you need a more fine-grained ntp setup on your vm. It is an object with the following fields:
   - **enabled**: If set the false (the default), chrony will not be installed and the vm ntp settings will be left to default.
   - **servers**: List of ntp servers to sync from with each entry containing two properties, **url** and **options** (see: https://chrony.tuxfamily.org/doc/4.2/chrony.conf.html#server)

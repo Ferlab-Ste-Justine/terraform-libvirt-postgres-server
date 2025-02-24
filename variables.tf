@@ -328,6 +328,12 @@ variable "patroni" {
   })
 }
 
+variable "patroni_version" {
+  description = "Version of patroni to install"
+  type        = string
+  default     = "4.0.4"
+}
+
 variable "install_dependencies" {
   description = "Whether to install all dependencies in cloud-init"
   type = bool
