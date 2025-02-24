@@ -197,3 +197,9 @@ variable "patroni" {
     synchronous_node_count = number,
   })
 }
+
+variable "patroni_version" {
+  description = "Version of patroni to install"
+  type        = string
+  default     = ""
+}

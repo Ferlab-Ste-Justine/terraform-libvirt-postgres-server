@@ -67,6 +67,7 @@ This module takes the following variables as input:
   - **master_stop_timeout**: Amount of time (in seconds) patroni will wait after a shutdown trigger before sending SIGKILL to the postgres server it manages.
   - **watchdog_safety_margin**: Safety margin before leader lock ttl expire where watchdown will force master shutdown to prevent split brain. See documentation for usager: https://patroni.readthedocs.io/en/latest/watchdog.html
   - **synchronous_node_count**: Number of additional nodes a transaction commit should be writen to in addition to the master to report a success.
+- **patroni_version**: Version of patroni to install. If left empty, it will default to the latest.
 - **chrony**: Optional chrony configuration for when you need a more fine-grained ntp setup on your vm. It is an object with the following fields:
   - **enabled**: If set the false (the default), chrony will not be installed and the vm ntp settings will be left to default.
   - **servers**: List of ntp servers to sync from with each entry containing two properties, **url** and **options** (see: https://chrony.tuxfamily.org/doc/4.2/chrony.conf.html#server)
