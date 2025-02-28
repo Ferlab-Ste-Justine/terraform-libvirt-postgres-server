@@ -58,6 +58,7 @@ data "template_cloudinit_config" "user_data" {
         fluentd = var.fluentd
         fluentd_conf = local.fluentd_conf
         patroni_conf = local.patroni_conf
+        patroni_version = var.patroni_version
         tls_pg_key = tls_private_key.pg_key.private_key_pem
         tls_pg_cert = "${tls_locally_signed_cert.pg_certificate.cert_pem}\n${var.postgres.ca.certificate}"
         tls_pg_ca_cert = var.postgres.ca.certificate
