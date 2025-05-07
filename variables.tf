@@ -220,10 +220,11 @@ variable "fluentbit_dynamic_config" {
       repo             = string
       ref              = string
       path             = string
-      trusted_gpg_keys = list(string)
+      trusted_gpg_keys = optional(list(string), [])
       auth             = object({
         client_ssh_key         = string
         server_ssh_fingerprint = string
+        client_ssh_user        = optional(string, "")
       })
     }), {
       repo             = ""
@@ -233,6 +234,7 @@ variable "fluentbit_dynamic_config" {
       auth             = {
         client_ssh_key         = ""
         server_ssh_fingerprint = ""
+        client_ssh_user        = ""
       }
     })
   })
@@ -259,6 +261,7 @@ variable "fluentbit_dynamic_config" {
       auth             = {
         client_ssh_key         = ""
         server_ssh_fingerprint = ""
+        client_ssh_user        = ""
       }
     }
   }
@@ -286,7 +289,7 @@ variable "postgres" {
 }
 
 variable "etcd" {
-  description = "Etcd configurations"
+  description = "Patroni etcd client configurations"
   sensitive   = true
   type = object({
       endpoints = list(string),
