@@ -50,7 +50,7 @@ module "network_configs" {
 }
 
 module "postgres_configs" {
-  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//postgres?ref=v0.37.5"
+  source = "git::https://github.com/Ferlab-Ste-Justine/terraform-cloudinit-templates.git//postgres?ref=feature/postgres-migration"
   install_dependencies = var.install_dependencies
   advertise_ip = local.ips.0
   etcd = var.etcd
