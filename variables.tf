@@ -292,10 +292,10 @@ variable "etcd" {
   description = "Patroni etcd client configurations"
   sensitive   = true
   type = object({
-      endpoints = list(string),
-      ca_cert = string,
-      username = string,
-      password = string,
+      endpoints = list(string)
+      ca_cert = string
+      username = string
+      password = string
   })
 }
 
@@ -303,31 +303,32 @@ variable "patroni" {
   description = "Patroni configurations"
   sensitive   = true
   type = object({
-    scope = string,
-    namespace = string,
-    name = string,
-    ttl = number,
-    loop_wait = number,
-    retry_timeout = number,
-    master_start_timeout = number,
-    master_stop_timeout = number,
-    watchdog_safety_margin = number,
-    is_synchronous         = bool,
+    scope = string
+    namespace = string
+    name = string
+    ttl = number
+    loop_wait = number
+    retry_timeout = number
+    master_start_timeout = number
+    master_stop_timeout = number
+    watchdog_safety_margin = number
+    use_pg_rewind          = bool
+    is_synchronous         = bool
     synchronous_settings   = optional(object({
       strict = bool
       synchronous_node_count = number
     }), {
       strict = true
       synchronous_node_count = 1
-    }),
+    })
     asynchronous_settings  = optional(object({
       maximum_lag_on_failover = number
     }), {
       //1MB
       maximum_lag_on_failover = 1048576
-    }),
-    client_certificate = string,
-    client_key = string,
+    })
+    client_certificate = string
+    client_key = string
   })
 }
 
@@ -341,4 +342,16 @@ variable "install_dependencies" {
   description = "Whether to install all dependencies in cloud-init"
   type = bool
   default = true
+}
+
+variable "running" {
+  description = "Whether the server should be running or stopped"
+  type        = bool
+  default     = true
+}
+
+variable "autostart" {
+  description = "Whether the server should start on host boot up"
+  type        = bool
+  default     = true
 }
