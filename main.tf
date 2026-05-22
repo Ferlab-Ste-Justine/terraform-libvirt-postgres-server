@@ -205,6 +205,7 @@ module "data_volume_configs" {
     filesystem    = "ext4"
     mount_path    = "/var/lib/postgresql"
     mount_options = "defaults"
+    overwrite     = false
   }]
 }
 
